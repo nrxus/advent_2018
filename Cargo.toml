@@ -5,8 +5,16 @@ authors = ["Andres <andresnrx@gmail.com>"]
 edition = "2018"
 
 [[bin]]
-name = "one"
-path = "src/one.rs"
+name = "one_a"
+path = "src/one_a.rs"
+
+[[bin]]
+name = "one_b"
+path = "src/one_b.rs"
+
+[lib]
+name = "common"
+path = "src/common/lib.rs"
 
 [dependencies]
 reqwest = "0.9.5"
