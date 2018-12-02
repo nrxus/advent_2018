@@ -29,7 +29,7 @@ pub fn try_fetch(day: u8) -> Result<String, Error> {
     let cookie = Cookie::new("session", session_string);
     client
         .get(&url)
-        .header(header::COOKIE, cookie.to_string().as_str())
+        .header(header::COOKIE, cookie.to_string())
         .send()
         .and_then(|mut r| r.text())
         .map_err(Error::Request)
