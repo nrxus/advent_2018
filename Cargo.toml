@@ -1,0 +1,13 @@
+[package]
+name = "advent_2018"
+version = "0.1.0"
+authors = ["Andres <andresnrx@gmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "one"
+path = "src/one.rs"
+
+[dependencies]
+reqwest = "0.9.5"
+cookie = "0.11.0"
