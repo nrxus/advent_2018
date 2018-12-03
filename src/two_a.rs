@@ -1,10 +1,6 @@
-use common::bootstrap;
-
 use enum_map::{Enum, EnumMap};
 
 use std::collections::HashSet;
-
-bootstrap!(2);
 
 #[derive(Debug, Enum)]
 enum Count {
@@ -69,3 +65,5 @@ ababab"#
         );
     }
 }
+
+common::bootstrap!(2);
