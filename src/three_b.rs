@@ -1,19 +1,22 @@
 #![feature(try_trait)]
+#![feature(vec_remove_item)]
 
-use std::{num::ParseIntError, option::NoneError, str::FromStr};
+use std::{collections::HashSet, num::ParseIntError, option::NoneError, str::FromStr};
 
-fn solve(input: &str) -> usize {
-    input
-        .lines()
-        .map(|l| l.parse::<Claim>().unwrap())
-        .fold(Fabric::new(), |mut fabric, c| {
-            fabric.claim(&c);
-            fabric
+fn solve(input: &str) -> u16 {
+    let mut clean_ids = Vec::with_capacity(100);
+    let mut fabric = Fabric::new();
+
+    let claims = input.lines().map(|l| l.parse::<Claim>().unwrap());
+    for c in claims {
+        clean_ids.push(c.id);
+        let conflicts = fabric.claim(&c);
+        conflicts.iter().for_each(|c| {
+            clean_ids.remove_item(c);
         })
-        .grid
-        .iter()
-        .filter(|&&s| s == FabricState::Conflict)
-        .count()
+    }
+
+    clean_ids[0]
 }
 
 struct Fabric {
@@ -27,36 +30,50 @@ impl Fabric {
         }
     }
 
-    fn claim(&mut self, claim: &Claim) {
-        claim.iter().for_each(|p| self.claim_at(p));
+    fn claim(&mut self, claim: &Claim) -> HashSet<u16> {
+        claim
+            .iter()
+            .flat_map(|p| self.claim_at(p, claim.id))
+            .collect()
     }
 
-    fn claim_at(&mut self, (column, row): (usize, usize)) {
+    fn claim_at(&mut self, (column, row): (usize, usize), id: u16) -> Vec<u16> {
         let index = row * 1000 + column;
-        self.grid[index].claim();
+        self.grid[index].claim(id)
     }
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum FabricState {
     Unclaimed,
-    Claimed,
+    Claimed(u16),
     Conflict,
 }
 
 impl FabricState {
-    fn claim(&mut self) {
+    fn claim(&mut self, id: u16) -> Vec<u16> {
         use self::FabricState::*;
 
-        *self = match self {
-            Unclaimed => Claimed,
-            _ => Conflict,
+        match *self {
+            Unclaimed => {
+                *self = Claimed(id);
+                vec![]
+            }
+            Claimed(old_id) => {
+                *self = Conflict;
+                vec![old_id, id]
+            }
+            Conflict => {
+                *self = Conflict;
+                vec![id]
+            }
         }
     }
 }
 
 #[derive(Debug)]
 struct Claim {
+    id: u16,
     bottom_right: (usize, usize),
     top_left: (usize, usize),
 }
@@ -98,7 +115,9 @@ impl FromStr for Claim {
     type Err = ClaimParseError;
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
-        let mut line = line.split("@").nth(1)?.split(":");
+        let mut line = line.split("@");
+        let id = line.next()?.trim()[1..].parse()?;
+        let mut line = line.next()?.split(":");
         let mut top_left = line.next()?.trim().split(",");
         let left = top_left.next()?.parse()?;
         let top = top_left.next()?.parse()?;
@@ -106,6 +125,7 @@ impl FromStr for Claim {
         let right = left + size.next()?.parse::<usize>()?;
         let bottom = top + size.next()?.parse::<usize>()?;
         Ok(Claim {
+            id,
             top_left: (left, top),
             bottom_right: (right, bottom),
         })
@@ -136,7 +156,7 @@ mod test {
         let input = r#"#1 @ 1,3: 4x4
 #2 @ 3,1: 4x4
 #3 @ 5,5: 2x2"#;
-        assert_eq!(solve(input), 4);
+        assert_eq!(solve(input), 3);
     }
 }
 
