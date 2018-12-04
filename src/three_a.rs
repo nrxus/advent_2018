@@ -3,14 +3,11 @@
 use std::{num::ParseIntError, option::NoneError, str::FromStr};
 
 fn solve(input: &str) -> usize {
-    let fabric = Fabric {
-        grid: [FabricState::Unclaimed; 1000 * 1000],
-    };
     input
         .lines()
         .map(|l| l.parse::<Claim>().unwrap())
-        .fold(fabric, |mut fabric, c| {
-            fabric.claim_all(c.iter());
+        .fold(Fabric::new(), |mut fabric, c| {
+            fabric.claim(&c);
             fabric
         })
         .grid
@@ -21,6 +18,23 @@ fn solve(input: &str) -> usize {
 
 struct Fabric {
     grid: [FabricState; 1000 * 1000],
+}
+
+impl Fabric {
+    fn new() -> Self {
+        Fabric {
+            grid: [FabricState::Unclaimed; 1000 * 1000],
+        }
+    }
+
+    fn claim(&mut self, claim: &Claim) {
+        claim.iter().for_each(|p| self.claim_at(p));
+    }
+
+    fn claim_at(&mut self, (column, row): (usize, usize)) {
+        let index = row * 1000 + column;
+        self.grid[index].claim();
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -38,17 +52,6 @@ impl FabricState {
             Unclaimed => Claimed,
             _ => Conflict,
         }
-    }
-}
-
-impl Fabric {
-    fn claim_all(&mut self, claims: impl Iterator<Item = (usize, usize)>) {
-        claims.for_each(|c| self.claim(c));
-    }
-
-    fn claim(&mut self, (column, row): (usize, usize)) {
-        let index = row * 1000 + column;
-        self.grid[index].claim();
     }
 }
 
