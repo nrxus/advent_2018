@@ -115,13 +115,13 @@ impl FromStr for Claim {
     type Err = ClaimParseError;
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
-        let mut line = line.split("@");
+        let mut line = line.split('@');
         let id = line.next()?.trim()[1..].parse()?;
-        let mut line = line.next()?.split(":");
-        let mut top_left = line.next()?.trim().split(",");
+        let mut line = line.next()?.split(':');
+        let mut top_left = line.next()?.trim().split(',');
         let left = top_left.next()?.parse()?;
         let top = top_left.next()?.parse()?;
-        let mut size = line.next()?.trim().split("x");
+        let mut size = line.next()?.trim().split('x');
         let right = left + size.next()?.parse::<usize>()?;
         let bottom = top + size.next()?.parse::<usize>()?;
         Ok(Claim {
