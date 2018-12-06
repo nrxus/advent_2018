@@ -12,24 +12,22 @@ fn solve(input: &str) -> u32 {
 
     Schedule::guard_schedules(&entries)
         .unwrap()
-        .iter()
+        .into_iter()
         .filter_map(|(id, schedules)| {
-            let asleep_times = schedules
+            schedules
                 .iter()
                 .flat_map(Schedule::asleep_minutes)
                 .fold(HashMap::<usize, u16>::new(), |mut acc, m| {
-                    let count = acc.entry(m).or_default();
-                    *count += 1;
+                    *(acc.entry(m).or_default()) += 1;
                     acc
                 })
                 .iter()
                 .max_by_key(|(_, &c)| c)
-                .map(|(&a, &b)| (a, b));
-
-            asleep_times.map(|t| (id, t))
+                .map(|(&a, &b)| (a, b))
+                .map(|t| (id, t))
         })
         .max_by_key(|(_, (_, count))| *count)
-        .map(|(&id, (minute, _))| u32::from(id) * minute as u32)
+        .map(|(id, (minute, _))| u32::from(id) * minute as u32)
         .unwrap()
 }
 
