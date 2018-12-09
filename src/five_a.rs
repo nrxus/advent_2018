@@ -3,7 +3,7 @@ mod polymer_len;
 use self::polymer_len::polymer_len;
 
 fn solve(input: &str) -> usize {
-    polymer_len(input.trim())
+    polymer_len(input.trim().as_bytes())
 }
 
 #[cfg(test)]

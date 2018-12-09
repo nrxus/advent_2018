@@ -1,11 +1,11 @@
 use std::ops::Range;
 
-pub fn polymer_len(input: &str) -> usize {
+pub fn polymer_len(input: &[u8]) -> usize {
     let mut index = None;
     let mut ranges = vec![];
     let mut building = false;
 
-    for (next, c) in input.chars().enumerate() {
+    for (next, c) in input.iter().enumerate() {
         let i = match index {
             None => {
                 if building {
@@ -18,8 +18,8 @@ pub fn polymer_len(input: &str) -> usize {
             Some(i) => i,
         };
 
-        let prev = input.chars().nth(i).unwrap();
-        if prev.eq_ignore_ascii_case(&c) && prev != c {
+        let prev = input[i];
+        if prev.eq_ignore_ascii_case(&c) && prev != *c {
             let i = if ranges.last().map(|r: &Range<_>| &r.end) == Some(&i) {
                 ranges.pop().unwrap().start
             } else {
