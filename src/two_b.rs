@@ -18,7 +18,7 @@ fn solve(input: &str) -> String {
                     .chars()
                     .zip(id.chars())
                     .filter_map(|(a, b)| if a == b { Some(a) } else { None })
-                    .collect()
+                    .collect();
             }
             None => {
                 previous.insert(id);
