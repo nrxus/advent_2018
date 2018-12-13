@@ -44,6 +44,10 @@ path = "src/five_a.rs"
 name = "five_b"
 path = "src/five_b.rs"
 
+[[bin]]
+name = "six_a"
+path = "src/six_a.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
