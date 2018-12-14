@@ -33,7 +33,7 @@ fn solve(input: &str) -> String {
             .min_by_key(|(&i, _)| i)
             .unwrap();
         graph.remove(&val);
-        graph.iter_mut().for_each(|(_, blockers)| {
+        graph.values_mut().for_each(|blockers| {
             blockers.remove(&val);
         });
         route.push(val as char)
