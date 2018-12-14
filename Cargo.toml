@@ -49,6 +49,10 @@ name = "six_a"
 path = "src/six_a.rs"
 
 [[bin]]
+name = "six_b"
+path = "src/six_b.rs"
+
+[[bin]]
 name = "seven_a"
 path = "src/seven_a.rs"
 
