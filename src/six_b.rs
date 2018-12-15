@@ -4,7 +4,7 @@ mod extensions;
 use self::extensions::{cart_product, AbsDiff};
 
 fn solve(input: &str) -> usize {
-    region(input, 1000)
+    region(input, 10_000)
 }
 
 fn region(input: &str, max_distance: u16) -> usize {
@@ -26,9 +26,10 @@ fn region(input: &str, max_distance: u16) -> usize {
             coords
                 .iter()
                 .map(|(c1, r1)| c1.abs_diff(c) + r1.abs_diff(r))
-                .sum::<u16>()
+                .map(|i| i as u32)
+                .sum::<u32>()
         })
-        .filter(|&d| d < max_distance)
+        .filter(|&d| d < max_distance as u32)
         .count()
 }
 
@@ -49,4 +50,5 @@ mod tests {
     }
 }
 
-common::read_main!();
+//common::read_main!();
+common::bootstrap!(6);
