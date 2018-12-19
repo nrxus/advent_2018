@@ -21,21 +21,21 @@ impl Board {
         }
     }
 
-    pub fn skip(&mut self, skipped: usize) -> &mut Board {
+    pub fn skip_clock(&mut self, skipped: usize) -> &mut Board {
         for _ in 0..skipped {
             self.current = unsafe { self.marbles.get_unchecked(self.current) }.next;
         }
         self
     }
 
-    pub fn rev(&mut self, skipped: usize) -> &mut Board {
+    pub fn skip_counterclock(&mut self, skipped: usize) -> &mut Board {
         for _ in 0..skipped {
             self.current = unsafe { self.marbles.get_unchecked(self.current) }.prev;
         }
         self
     }
 
-    pub fn push(&mut self, value: u32) {
+    pub fn insert(&mut self, value: u32) {
         let current = self.marbles.len();
         let prev_marble = unsafe { self.marbles.get_unchecked_mut(self.current) };
         let new_marble = Marble {
@@ -79,64 +79,23 @@ fn solve(input: &str) -> u32 {
     let mut input = input.split_whitespace();
     let players: usize = input.next().unwrap().parse().unwrap();
     let mut players = vec![0; players];
-    let marbles = input.rev().skip(1).next().unwrap().parse::<u32>().unwrap();
+    let marbles = input.rev().skip(1).next().unwrap().parse::<u32>().unwrap() * 100;
     let capacity = (marbles - 2 * (marbles / 23) + if marbles % 23 == 0 { 1 } else { 0 }) as usize;
     let mut board = Board::new(capacity);
     let mut player = 0;
     for marble in 1..=marbles {
         if marble % 23 == 0 {
-            let removed = board.rev(7).remove();
+            let removed = board.skip_counterclock(7).remove();
             player = player % players.len();
             unsafe {
                 *(players.get_unchecked_mut(player)) += marble + removed;
             }
         } else {
-            board.skip(1).push(marble);
+            board.skip_clock(1).insert(marble);
         }
         player += 1;
     }
     players.into_iter().max().unwrap()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_a() {
-        let input = r"9 players; last marble is worth 25 points";
-        assert_eq!(solve(input), 32);
-    }
-
-    #[test]
-    fn test_b() {
-        let input = r"10 players; last marble is worth 1618 points";
-        assert_eq!(solve(input), 8317);
-    }
-
-    #[test]
-    fn test_c() {
-        let input = r"13 players; last marble is worth 7999 points";
-        assert_eq!(solve(input), 146373);
-    }
-
-    #[test]
-    fn test_d() {
-        let input = r"17 players; last marble is worth 1104 points";
-        assert_eq!(solve(input), 2764);
-    }
-
-    #[test]
-    fn test_e() {
-        let input = r"21 players; last marble is worth 6111 points";
-        assert_eq!(solve(input), 54718);
-    }
-
-    #[test]
-    fn test_f() {
-        let input = r"30 players; last marble is worth 5807 points";
-        assert_eq!(solve(input), 37305);
-    }
 }
 
 common::read_main!();
