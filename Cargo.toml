@@ -76,6 +76,10 @@ path = "src/nine_a.rs"
 name = "nine_b"
 path = "src/nine_b.rs"
 
+[[bin]]
+name = "ten_a"
+path = "src/ten_a.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
@@ -84,3 +88,5 @@ path = "src/common/lib.rs"
 reqwest = "0.9.5"
 cookie = "0.11.0"
 enum-map = "0.4.1"
+lazy_static = "1.2.0"
+regex = "1.1.0"
