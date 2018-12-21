@@ -80,6 +80,10 @@ path = "src/nine_b.rs"
 name = "ten_a"
 path = "src/ten_a.rs"
 
+[[bin]]
+name = "ten_b"
+path = "src/ten_b.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
