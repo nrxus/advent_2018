@@ -21,21 +21,21 @@ impl Board {
         }
     }
 
-    pub fn skip(&mut self, skipped: usize) -> &mut Board {
-        for _ in 0..skipped {
-            self.current = unsafe { self.marbles.get_unchecked(self.current) }.next;
-        }
+    pub fn skip_clock(&mut self, skipped: usize) -> &mut Board {
+        self.current = (0..skipped).fold(self.current, |current, _| {
+            unsafe { self.marbles.get_unchecked(current) }.next
+        });
         self
     }
 
-    pub fn rev(&mut self, skipped: usize) -> &mut Board {
-        for _ in 0..skipped {
-            self.current = unsafe { self.marbles.get_unchecked(self.current) }.prev;
-        }
+    pub fn skip_counterclock(&mut self, skipped: usize) -> &mut Board {
+        self.current = (0..skipped).fold(self.current, |current, _| {
+            unsafe { self.marbles.get_unchecked(current) }.prev
+        });
         self
     }
 
-    pub fn push(&mut self, value: u32) {
+    pub fn insert(&mut self, value: u32) {
         let current = self.marbles.len();
         let prev_marble = unsafe { self.marbles.get_unchecked_mut(self.current) };
         let new_marble = Marble {
@@ -80,21 +80,21 @@ fn solve(input: &str) -> u32 {
     let players: usize = input.next().unwrap().parse().unwrap();
     let mut players = vec![0; players];
     let marbles = input.rev().skip(1).next().unwrap().parse::<u32>().unwrap();
-    let capacity = (marbles - 2 * (marbles / 23) + if marbles % 23 == 0 { 1 } else { 0 }) as usize;
-    let mut board = Board::new(capacity);
+    let rounds = marbles as usize / 23;
+    let mut board = Board::new(21 * rounds + 1);
     let mut player = 0;
-    for marble in 1..=marbles {
-        if marble % 23 == 0 {
-            let removed = board.rev(7).remove();
-            player = player % players.len();
-            unsafe {
-                *(players.get_unchecked_mut(player)) += marble + removed;
-            }
-        } else {
-            board.skip(1).push(marble);
+    (0..rounds).for_each(|round| {
+        let last = (round + 1) * 23;
+        (round * 23 + 1..last).for_each(|m| {
+            board.skip_clock(1).insert(m as u32);
+        });
+        let removed = board.skip_counterclock(7).remove();
+        player = (player + 22) % players.len();
+        unsafe {
+            *(players.get_unchecked_mut(player)) += last as u32 + removed;
         }
         player += 1;
-    }
+    });
     players.into_iter().max().unwrap()
 }
 
