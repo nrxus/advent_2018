@@ -1,6 +1,7 @@
 mod extensions;
 
 use self::extensions::cart_product;
+use rayon::prelude::*;
 
 fn power_level(x: usize, y: usize, serial: i32) -> i32 {
     let rack_id = x as i32 + 10;
@@ -15,7 +16,12 @@ fn solve(input: &str) -> Answer {
         .for_each(|(i, v)| *v = power_level(i % 300 + 1, i / 300 + 1, serial));
 
     (1..301_usize)
-        .flat_map(|s| cart_product(0..301 - s, 0..301 - s).map(move |(x, y)| (x, y, s)))
+        .into_par_iter()
+        .flat_map(|s| {
+            cart_product(0..301 - s, 0..301 - s)
+                .par_bridge()
+                .map(move |(x, y)| (x, y, s))
+        })
         .max_by_key(|&(x, y, s)| {
             cart_product(0..s, 0..s)
                 .map(|(dx, dy)| (x + dx, y + dy))
