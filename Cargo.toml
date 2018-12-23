@@ -84,6 +84,14 @@ path = "src/ten_a.rs"
 name = "ten_b"
 path = "src/ten_b.rs"
 
+[[bin]]
+name = "eleven_a"
+path = "src/eleven_a.rs"
+
+[[bin]]
+name = "eleven_b"
+path = "src/eleven_b.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
