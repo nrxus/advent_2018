@@ -48,6 +48,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn test() {
         assert_eq!(solve("18"), Answer(90, 269, 16));
         assert_eq!(solve("42"), Answer(232, 251, 12));
@@ -55,4 +56,4 @@ mod tests {
 }
 
 common::read_main!();
-//common::bootstrap!(9);
+//common::bootstrap!(11);
