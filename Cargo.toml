@@ -97,6 +97,10 @@ name = "twelve_a"
 path = "src/twelve_a.rs"
 
 [[bin]]
+name = "twelve_b"
+path = "src/twelve_b.rs"
+
+[[bin]]
 name = "thirteen_a"
 path = "src/thirteen_a.rs"
 
