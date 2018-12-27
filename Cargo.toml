@@ -108,6 +108,14 @@ path = "src/thirteen_a.rs"
 name = "thirteen_b"
 path = "src/thirteen_b.rs"
 
+[[bin]]
+name = "fourteen_a"
+path = "src/fourteen_a.rs"
+
+[[bin]]
+name = "fourteen_b"
+path = "src/fourteen_b.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
@@ -119,3 +127,4 @@ enum-map = "0.4.1"
 lazy_static = "1.2.0"
 regex = "1.1.0"
 rayon = "1.0.3"
+array-macro = "1.0.2"
