@@ -26,10 +26,10 @@ fn region(input: &str, max_distance: u16) -> usize {
             coords
                 .iter()
                 .map(|(c1, r1)| c1.abs_diff(c) + r1.abs_diff(r))
-                .map(|i| i as u32)
+                .map(u32::from)
                 .sum::<u32>()
         })
-        .filter(|&d| d < max_distance as u32)
+        .filter(|&d| d < u32::from(max_distance))
         .count()
 }
 

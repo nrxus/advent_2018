@@ -27,15 +27,13 @@ pub fn polymer_len(input: &[u8]) -> usize {
             };
             index = i.checked_sub(1);
             building = true;
-        } else {
-            if building {
-                ranges.push(i + 1..next);
+        } else if building {
+            ranges.push(i + 1..next);
 
-                index = Some(next);
-                building = false;
-            } else {
-                index = Some(i + 1);
-            }
+            index = Some(next);
+            building = false;
+        } else {
+            index = Some(i + 1);
         }
     }
 

@@ -27,7 +27,7 @@ fn solve(input: &str) -> usize {
                         .filter_map(|i| children.get(i))
                         .sum(),
                 };
-                if adder.len() == 0 {
+                if adder.is_empty() {
                     return value;
                 }
                 adder

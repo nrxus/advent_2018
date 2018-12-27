@@ -77,7 +77,7 @@ fn solve(input: &str) -> String {
         .unwrap();
 
     (0..)
-        .scan(999999, |width, _| {
+        .scan(999_999, |width, _| {
             message.advance();
             let min_x = message.points.iter().map(|p| p.position.0).min().unwrap();
             let max_x = message.points.iter().map(|p| p.position.0).max().unwrap();

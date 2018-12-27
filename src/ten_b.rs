@@ -55,7 +55,7 @@ fn solve(input: &str) -> u32 {
         .unwrap();
 
     (0..)
-        .scan(999999, |width, second| {
+        .scan(999_999, |width, second| {
             message.advance();
             let min_x = message.points.iter().map(|p| p.position.0).min().unwrap();
             let max_x = message.points.iter().map(|p| p.position.0).max().unwrap();

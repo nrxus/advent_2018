@@ -41,7 +41,7 @@ fn duration(input: &str, num_workers: u8, base_duration: u8) -> u16 {
         workable.sort_unstable();
         workable.iter().take(free_workers).for_each(|&i| {
             unworked.remove(&i);
-            working.insert(i, (1 + base_duration + i - b'A') as u16);
+            working.insert(i, u16::from(1 + base_duration + i - b'A'));
         });
 
         let (_, &work_step) = working

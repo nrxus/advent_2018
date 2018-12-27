@@ -79,7 +79,7 @@ fn solve(input: &str) -> u32 {
     let mut input = input.split_whitespace();
     let players: usize = input.next().unwrap().parse().unwrap();
     let mut players = vec![0; players];
-    let marbles = input.rev().skip(1).next().unwrap().parse::<u32>().unwrap();
+    let marbles = input.rev().nth(1).unwrap().parse::<u32>().unwrap();
     let rounds = marbles as usize / 23;
     let mut board = Board::new(21 * rounds + 1);
     let mut player = 0;
