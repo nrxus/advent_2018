@@ -1,24 +1,24 @@
 fn solve(input: &str) -> usize {
-    let input = input.trim().as_bytes();
-    let mut scores = vec![b'3', b'7'];
+    let input: Vec<_> = input.trim().bytes().map(|c| c - b'0').collect();
+    let mut scores = vec![3, 7];
     let mut first = 0;
     let mut second = 1;
 
     loop {
-        let new = scores[first] - b'0' + scores[second] - b'0';
+        let new = scores[first] + scores[second];
         if new > 9 {
-            scores.extend(&[b'1', b'0' + (new % 10)]);
+            scores.extend(&[1, new % 10]);
         } else {
-            scores.push(b'0' + new);
+            scores.push(new);
         }
-        first = (first + 1 + (scores[first] - b'0') as usize) % scores.len();
-        second = (second + 1 + (scores[second] - b'0') as usize) % scores.len();
+        first = (first + 1 + scores[first] as usize) % scores.len();
+        second = (second + 1 + scores[second] as usize) % scores.len();
 
         if let Some((i, _)) = scores
             .windows(input.len())
             .enumerate()
             .skip(scores.len().checked_sub(input.len() + 1).unwrap_or(0))
-            .find(|(_, w)| *w == input)
+            .find(|(_, w)| *w == input.as_slice())
         {
             break i;
         }
@@ -35,7 +35,7 @@ mod tests {
         assert_eq!(solve("01245"), 5);
         assert_eq!(solve("92510"), 18);
         assert_eq!(solve("59414"), 2018);
-        assert_eq!(solve("515891"), 9);
+        assert_eq!(solve("515891\n"), 9);
     }
 }
 
