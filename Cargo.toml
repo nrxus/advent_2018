@@ -124,6 +124,10 @@ path = "src/fifteen_a.rs"
 name = "fifteen_b"
 path = "src/fifteen_b.rs"
 
+[[bin]]
+name = "sixteen_a"
+path = "src/sixteen_a.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
@@ -136,3 +140,5 @@ lazy_static = "1.2.0"
 regex = "1.1.0"
 rayon = "1.0.3"
 array-macro = "1.0.2"
+strum = "0.13.0"
+strum_macros = "0.13.0"
