@@ -179,9 +179,9 @@ impl BattleField {
         if position % self.num_cols > 0 {
             neighbors[0] = Some(position - 1);
         };
-        if position + 1 % self.num_cols > 0 {
+        if position % self.num_cols < self.num_cols - 1 {
             neighbors[1] = Some(position + 1);
-        };
+        }
         if let Some(i) = position.checked_sub(self.num_cols) {
             neighbors[2] = Some(i);
         }
