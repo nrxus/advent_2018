@@ -13,89 +13,75 @@ fn solve(input: &str) -> u32 {
 struct Program {
     lines: Vec<Line>,
     registers: Registers,
+    ip: usize,
 }
 
 impl Program {
     fn run(&mut self) -> u32 {
-        while self.registers.instruction() < self.lines.len() {
-            let line = &self.lines[self.registers.instruction()];
+        while self.instruction_index() < self.lines.len() {
+            let line = &self.lines[self.instruction_index()];
             self.registers.calculate(line);
-            self.registers.increase_instruction();
+            self.registers.0[self.ip] += 1;
         }
-        self.registers.regs[0]
+
+        self.registers.0[0]
+    }
+
+    fn instruction_index(&self) -> usize {
+        self.registers.0[self.ip] as usize
     }
 }
 
 #[derive(Debug)]
 struct Line {
     instruction: Instruction,
-    a: u32,
-    b: u32,
-    c: u32,
+    dst: usize,
 }
 
 #[derive(Debug, PartialEq, Eq, Default)]
-struct Registers {
-    ip: usize,
-    regs: [u32; 6],
-}
+struct Registers([u32; 6]);
 
 impl Registers {
     fn calculate(&mut self, line: &Line) {
-        let &Line {
-            instruction,
-            a,
-            b,
-            c,
-        } = line;
-
-        self.regs[c as usize] = match instruction {
-            Instruction::AddR => self.regs[a as usize] + self.regs[b as usize],
-            Instruction::AddI => self.regs[a as usize] + b,
-            Instruction::MulR => self.regs[a as usize] * self.regs[b as usize],
-            Instruction::MulI => self.regs[a as usize] * b,
-            Instruction::BandR => self.regs[a as usize] & self.regs[b as usize],
-            Instruction::BandI => self.regs[a as usize] & b,
-            Instruction::BorR => self.regs[a as usize] | self.regs[b as usize],
-            Instruction::BorI => self.regs[a as usize] | b,
-            Instruction::SetR => self.regs[a as usize],
-            Instruction::SetI => a,
-            Instruction::GtIR => (a > self.regs[b as usize]) as u32,
-            Instruction::GtRI => (self.regs[a as usize] > b) as u32,
-            Instruction::GtRR => (self.regs[a as usize] > self.regs[b as usize]) as u32,
-            Instruction::EqIR => (a == self.regs[b as usize]) as u32,
-            Instruction::EqRI => (self.regs[a as usize] == b) as u32,
-            Instruction::EqRR => (self.regs[a as usize] == self.regs[b as usize]) as u32,
+        self.0[line.dst] = match line.instruction {
+            Instruction::AddR(a, b) => self.0[a] + self.0[b],
+            Instruction::MulR(a, b) => self.0[a] * self.0[b],
+            Instruction::BanR(a, b) => self.0[a] & self.0[b],
+            Instruction::BorR(a, b) => self.0[a] | self.0[b],
+            Instruction::GtRR(a, b) => (self.0[a] > self.0[b]) as u32,
+            Instruction::EqRR(a, b) => (self.0[a] == self.0[b]) as u32,
+            Instruction::AddI(a, b) => self.0[a] + b,
+            Instruction::MulI(a, b) => self.0[a] * b,
+            Instruction::BanI(a, b) => self.0[a] & b,
+            Instruction::BorI(a, b) => self.0[a] | b,
+            Instruction::GtRI(a, b) => (self.0[a] > b) as u32,
+            Instruction::EqRI(a, b) => (self.0[a] == b) as u32,
+            Instruction::GtIR(a, b) => (a > self.0[b]) as u32,
+            Instruction::EqIR(a, b) => (a == self.0[b]) as u32,
+            Instruction::SetR(a) => self.0[a],
+            Instruction::SetI(a) => a,
         };
-    }
-
-    fn instruction(&self) -> usize {
-        self.regs[self.ip] as usize
-    }
-
-    fn increase_instruction(&mut self) {
-        self.regs[self.ip] += 1;
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 enum Instruction {
-    AddR,
-    AddI,
-    MulR,
-    MulI,
-    BandR,
-    BandI,
-    BorR,
-    BorI,
-    SetR,
-    SetI,
-    GtIR,
-    GtRI,
-    GtRR,
-    EqIR,
-    EqRI,
-    EqRR,
+    AddR(usize, usize),
+    MulR(usize, usize),
+    BanR(usize, usize),
+    BorR(usize, usize),
+    GtRR(usize, usize),
+    EqRR(usize, usize),
+    AddI(usize, u32),
+    MulI(usize, u32),
+    BanI(usize, u32),
+    BorI(usize, u32),
+    GtRI(usize, u32),
+    EqRI(usize, u32),
+    GtIR(u32, usize),
+    EqIR(u32, usize),
+    SetR(usize),
+    SetI(u32),
 }
 
 impl FromStr for Program {
@@ -109,12 +95,13 @@ impl FromStr for Program {
             .as_str()
             .parse()?;
         let lines = input.map(|l| Line::from_str(l)).collect::<Result<_, _>>()?;
-        let registers = Registers {
-            ip,
-            regs: [0, 0, 0, 0, 0, 0],
-        };
+        let registers = Registers([0, 0, 0, 0, 0, 0]);
 
-        Ok(Program { lines, registers })
+        Ok(Program {
+            lines,
+            registers,
+            ip,
+        })
     }
 }
 
@@ -129,36 +116,31 @@ impl FromStr for Line {
 
         let caps = RE.captures(input)?;
         let instruction = caps.name("instruction")?.as_str();
-        let a: u32 = caps.name("a")?.as_str().parse()?;
-        let b: u32 = caps.name("b")?.as_str().parse()?;
-        let c: u32 = caps.name("c")?.as_str().parse()?;
+        let a = caps.name("a")?.as_str();
+        let b = caps.name("b")?.as_str();
+        let dst: usize = caps.name("c")?.as_str().parse()?;
 
         let instruction = match instruction {
-            "addr" => Instruction::AddR,
-            "addi" => Instruction::AddI,
-            "mulr" => Instruction::MulR,
-            "muli" => Instruction::MulI,
-            "banr" => Instruction::BandR,
-            "bani" => Instruction::BandI,
-            "borr" => Instruction::BorR,
-            "bori" => Instruction::BorI,
-            "setr" => Instruction::SetR,
-            "seti" => Instruction::SetI,
-            "gtir" => Instruction::GtIR,
-            "gtri" => Instruction::GtRI,
-            "gtrr" => Instruction::GtRR,
-            "eqir" => Instruction::EqIR,
-            "eqri" => Instruction::EqRI,
-            "eqrr" => Instruction::EqRR,
+            "addr" => Instruction::AddR(a.parse()?, b.parse()?),
+            "addi" => Instruction::AddI(a.parse()?, b.parse()?),
+            "mulr" => Instruction::MulR(a.parse()?, b.parse()?),
+            "muli" => Instruction::MulI(a.parse()?, b.parse()?),
+            "banr" => Instruction::BanR(a.parse()?, b.parse()?),
+            "bani" => Instruction::BanI(a.parse()?, b.parse()?),
+            "borr" => Instruction::BorR(a.parse()?, b.parse()?),
+            "bori" => Instruction::BorI(a.parse()?, b.parse()?),
+            "setr" => Instruction::SetR(a.parse()?),
+            "seti" => Instruction::SetI(a.parse()?),
+            "gtir" => Instruction::GtIR(a.parse()?, b.parse()?),
+            "gtri" => Instruction::GtRI(a.parse()?, b.parse()?),
+            "gtrr" => Instruction::GtRR(a.parse()?, b.parse()?),
+            "eqir" => Instruction::EqIR(a.parse()?, b.parse()?),
+            "eqri" => Instruction::EqRI(a.parse()?, b.parse()?),
+            "eqrr" => Instruction::EqRR(a.parse()?, b.parse()?),
             _ => Err(ParsingError)?,
         };
 
-        Ok(Line {
-            instruction,
-            a,
-            b,
-            c,
-        })
+        Ok(Line { instruction, dst })
     }
 }
 
