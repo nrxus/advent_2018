@@ -148,6 +148,10 @@ path = "src/eighteen_a.rs"
 name = "eighteen_b"
 path = "src/eighteen_b.rs"
 
+[[bin]]
+name = "nineteen_a"
+path = "src/nineteen_a.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
