@@ -3,20 +3,70 @@ mod extensions;
 use self::extensions::cart_product;
 
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fmt,
     str::FromStr,
 };
 
 fn solve(input: &str) -> u32 {
     let house = House::from_str(input).unwrap();
-    println!("{}", house);
     house.most_steps()
 }
 
 impl House {
     fn most_steps(&self) -> u32 {
-        0
+        let mut explored = HashSet::new();
+        let mut frontier = VecDeque::new();
+        frontier.push_back((0, self.start));
+        let mut max_distance = 0;
+
+        while let Some((distance, position)) = frontier.pop_front() {
+            max_distance = distance;
+            explored.insert(position);
+
+            let rooms: Vec<_> = self
+                .adjacent_rooms(position)
+                .iter()
+                .filter_map(|x| *x)
+                .filter(|x| !explored.contains(x))
+                .filter(|x| !frontier.iter().any(|(_, f)| f == x))
+                .map(|x| (distance + 1, x))
+                .collect();
+
+            frontier.extend(rooms);
+        }
+
+        max_distance
+    }
+
+    fn adjacent_rooms(&self, pos: usize) -> [Option<usize>; 4] {
+        //house is padded with walls so we do not need to do edge-checking for out of bounds
+        let mut rooms = [None, None, None, None];
+
+        //up
+        match self.tiles[pos - self.cols] {
+            Tile::HDoor | Tile::VDoor => rooms[0] = Some(pos - 2 * self.cols),
+            _ => {}
+        }
+
+        //down
+        match self.tiles[pos + self.cols] {
+            Tile::HDoor | Tile::VDoor => rooms[1] = Some(pos + 2 * self.cols),
+            _ => {}
+        }
+
+        //left
+        match self.tiles[pos - 1] {
+            Tile::HDoor | Tile::VDoor => rooms[2] = Some(pos - 2),
+            _ => {}
+        }
+
+        //right
+        match self.tiles[pos + 1] {
+            Tile::HDoor | Tile::VDoor => rooms[3] = Some(pos + 2),
+            _ => {}
+        }
+        rooms
     }
 }
 
@@ -81,59 +131,56 @@ impl FromStr for House {
         room_walker.insert((0, 0));
         let mut room_stack: Vec<(HashSet<(isize, isize)>, HashSet<(isize, isize)>)> = vec![];
 
-        input.iter().try_for_each(|c| match c {
-            b'N' => {
-                room_walker = room_walker
-                    .iter()
-                    .map(|&l| room_adder(l, &mut map, Tile::VDoor, (0, -1)))
-                    .collect::<Result<_, _>>()?;
-                Ok(())
+        input.iter().try_for_each(|c| -> Result<_, String> {
+            match c {
+                b'N' => {
+                    room_walker = room_walker
+                        .iter()
+                        .map(|&l| room_adder(l, &mut map, Tile::VDoor, (0, -1)))
+                        .collect::<Result<_, _>>()?
+                }
+                b'S' => {
+                    room_walker = room_walker
+                        .iter()
+                        .map(|&l| room_adder(l, &mut map, Tile::VDoor, (0, 1)))
+                        .collect::<Result<_, _>>()?
+                }
+                b'E' => {
+                    room_walker = room_walker
+                        .iter()
+                        .map(|&l| room_adder(l, &mut map, Tile::HDoor, (1, 0)))
+                        .collect::<Result<_, _>>()?
+                }
+                b'W' => {
+                    room_walker = room_walker
+                        .iter()
+                        .map(|&l| room_adder(l, &mut map, Tile::HDoor, (-1, 0)))
+                        .collect::<Result<_, _>>()?
+                }
+                b'(' => {
+                    room_stack.push((room_walker.clone(), HashSet::new()));
+                }
+                b'|' => {
+                    let last_level = room_stack
+                        .last_mut()
+                        .ok_or("found | with an empty room stack")?;
+                    last_level.1 = last_level.1.union(&room_walker).cloned().collect();
+                    room_walker = last_level.0.clone();
+                }
+                b')' => {
+                    let last_level = room_stack.pop().ok_or("found ) with an empty room stack")?;
+                    room_walker = last_level.1.union(&room_walker).cloned().collect();
+                }
+                _ => Err(format!("did not expect {}", c))?,
             }
-            b'S' => {
-                room_walker = room_walker
-                    .iter()
-                    .map(|&l| room_adder(l, &mut map, Tile::VDoor, (0, 1)))
-                    .collect::<Result<_, _>>()?;
-                Ok(())
-            }
-            b'E' => {
-                room_walker = room_walker
-                    .iter()
-                    .map(|&l| room_adder(l, &mut map, Tile::HDoor, (1, 0)))
-                    .collect::<Result<_, _>>()?;
-                Ok(())
-            }
-            b'W' => {
-                room_walker = room_walker
-                    .iter()
-                    .map(|&l| room_adder(l, &mut map, Tile::HDoor, (-1, 0)))
-                    .collect::<Result<_, _>>()?;
-                Ok(())
-            }
-            b'(' => {
-                room_stack.push((room_walker.clone(), HashSet::new()));
-                Ok(())
-            }
-            b'|' => {
-                let last_level = room_stack
-                    .last_mut()
-                    .ok_or("found | with an empty room stack")?;
-                last_level.1 = last_level.1.union(&room_walker).cloned().collect();
-                room_walker = last_level.0.clone();
-                Ok(())
-            }
-            b')' => {
-                let last_level = room_stack.pop().ok_or("found ) with an empty room stack")?;
-                room_walker = last_level.1.union(&room_walker).cloned().collect();
-                Ok(())
-            }
-            _ => Err(format!("did not expect {}", c)),
-        });
+            Ok(())
+        })?;
 
-        let min_x = map.keys().map(|(x, _)| *x).min().unwrap();
-        let max_x = map.keys().map(|(x, _)| *x).max().unwrap();
-        let min_y = map.keys().map(|(_, y)| *y).min().unwrap();
-        let max_y = map.keys().map(|(_, y)| *y).max().unwrap();
+        // pad edges with walls
+        let min_x = map.keys().map(|(x, _)| *x).min().unwrap() - 1;
+        let max_x = map.keys().map(|(x, _)| *x).max().unwrap() + 1;
+        let min_y = map.keys().map(|(_, y)| *y).min().unwrap() - 1;
+        let max_y = map.keys().map(|(_, y)| *y).max().unwrap() + 1;
 
         let tiles = cart_product(min_y..=max_y, min_x..=max_x)
             .map(|(y, x)| map.get(&(x, y)).cloned().unwrap_or(Tile::Wall))
@@ -172,30 +219,93 @@ mod tests {
     #[test]
     fn test_a() {
         let input = r"^WNE$";
+        let house = House::from_str(input).unwrap();
+        let stringified = r"#####
+#.|.#
+#-###
+#.|X#
+#####";
+        assert_eq!(house.to_string().trim(), stringified.trim());
         assert_eq!(solve(input), 3);
     }
 
     #[test]
     fn test_b() {
         let input = r"^ENWWW(NEEE|SSE(EE|N))$";
+        let house = House::from_str(input).unwrap();
+        let stringified = r"#########
+#.|.|.|.#
+#-#######
+#.|.|.|.#
+#-#####-#
+#.#.#X|.#
+#-#-#####
+#.|.|.|.#
+#########";
+        assert_eq!(house.to_string().trim(), stringified.trim());
         assert_eq!(solve(input), 10);
     }
 
     #[test]
     fn test_c() {
         let input = r"^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$";
+        let house = House::from_str(input).unwrap();
+        let stringified = r"###########
+#.|.#.|.#.#
+#-###-#-#-#
+#.|.|.#.#.#
+#-#####-#-#
+#.#.#X|.#.#
+#-#-#####-#
+#.#.|.|.|.#
+#-###-###-#
+#.|.|.#.|.#
+###########";
+        assert_eq!(house.to_string().trim(), stringified.trim());
         assert_eq!(solve(input), 18);
     }
 
     #[test]
     fn test_d() {
         let input = r"^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
+        let house = House::from_str(input).unwrap();
+        let stringified = r"#############
+#.|.|.|.|.|.#
+#-#####-###-#
+#.#.|.#.#.#.#
+#-#-###-#-#-#
+#.#.#.|.#.|.#
+#-#-#-#####-#
+#.#.#.#X|.#.#
+#-#-#-###-#-#
+#.|.#.|.#.#.#
+###-#-###-#-#
+#.|.#.|.|.#.#
+#############";
+        assert_eq!(house.to_string().trim(), stringified.trim());
         assert_eq!(solve(input), 23);
     }
 
     #[test]
     fn test_e() {
         let input = r"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$";
+        let house = House::from_str(input).unwrap();
+        let stringified = r"###############
+#.|.|.|.#.|.|.#
+#-###-###-#-#-#
+#.|.#.|.|.#.#.#
+#-#########-#-#
+#.#.|.|.|.|.#.#
+#-#-#########-#
+#.#.#.|X#.|.#.#
+###-#-###-#-#-#
+#.|.#.#.|.#.|.#
+#-###-#####-###
+#.|.#.|.|.#.#.#
+#-#-#####-#-#-#
+#.#.|.|.|.#.|.#
+###############";
+        assert_eq!(house.to_string().trim(), stringified.trim());
         assert_eq!(solve(input), 31);
     }
 }
