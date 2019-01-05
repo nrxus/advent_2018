@@ -172,6 +172,10 @@ path = "src/twenty_two_a.rs"
 name = "twenty_two_b"
 path = "src/twenty_two_b.rs"
 
+[[bin]]
+name = "twenty_three_a"
+path = "src/twenty_three_a.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
