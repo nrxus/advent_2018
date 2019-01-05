@@ -2,7 +2,7 @@
 
 mod extensions;
 
-use self::extensions::cart_product;
+use self::extensions::{cart_product, AbsDiff};
 
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
@@ -31,12 +31,14 @@ impl Cave {
         let mut cache = HashMap::new();
         let mut explored = HashSet::new();
         let mut frontier = BinaryHeap::new();
+        let start = Node {
+            position: (0, 0),
+            tool: Tool::Torch,
+        };
         frontier.push(Step {
-            node: Node {
-                position: (0, 0),
-                tool: Tool::Torch,
-            },
+            node: start,
             minutes: 0,
+            estimate: start.min_minutes(&self.target),
         });
 
         while let Some(step) = frontier.pop() {
@@ -73,16 +75,18 @@ impl Cave {
 
         //same room, different tool
         let tools = self.region(step.node.position, cache).tools();
+        let node = Node {
+            position: step.node.position,
+            tool: if tools[0] == step.node.tool {
+                tools[1]
+            } else {
+                tools[0]
+            },
+        };
         rooms[0] = Some(Step {
             minutes: step.minutes + 7,
-            node: Node {
-                position: step.node.position,
-                tool: if tools[0] == step.node.tool {
-                    tools[1]
-                } else {
-                    tools[0]
-                },
-            },
+            estimate: node.min_minutes(&self.target),
+            node,
         });
 
         //same tool, going up
@@ -93,11 +97,13 @@ impl Cave {
             .checked_sub(1)
             .map(|y| (step.node.position.0, y))
             .filter(|&pos| self.region(pos, cache).tools().contains(&step.node.tool))
-            .map(|position| Step {
-                node: Node {
-                    position,
-                    tool: step.node.tool,
-                },
+            .map(|position| Node {
+                position,
+                tool: step.node.tool,
+            })
+            .map(|node| Step {
+                node,
+                estimate: node.min_minutes(&self.target),
                 minutes: step.minutes + 1,
             });
 
@@ -109,22 +115,26 @@ impl Cave {
             .checked_sub(1)
             .map(|x| (x, step.node.position.1))
             .filter(|&pos| self.region(pos, cache).tools().contains(&step.node.tool))
-            .map(|position| Step {
-                node: Node {
-                    position,
-                    tool: step.node.tool,
-                },
+            .map(|position| Node {
+                position,
+                tool: step.node.tool,
+            })
+            .map(|node| Step {
+                node,
+                estimate: node.min_minutes(&self.target),
                 minutes: step.minutes + 1,
             });
 
         //same tool, going right
         let right = (step.node.position.0 + 1, step.node.position.1);
         if self.region(right, cache).tools().contains(&step.node.tool) {
+            let node = Node {
+                position: right,
+                tool: step.node.tool,
+            };
             rooms[3] = Some(Step {
-                node: Node {
-                    position: right,
-                    tool: step.node.tool,
-                },
+                node,
+                estimate: node.min_minutes(&self.target),
                 minutes: step.minutes + 1,
             });
         }
@@ -132,11 +142,13 @@ impl Cave {
         //same tool, going down
         let down = (step.node.position.0, step.node.position.1 + 1);
         if self.region(down, cache).tools().contains(&step.node.tool) {
+            let node = Node {
+                position: down,
+                tool: step.node.tool,
+            };
             rooms[4] = Some(Step {
-                node: Node {
-                    position: down,
-                    tool: step.node.tool,
-                },
+                node,
+                estimate: node.min_minutes(&self.target),
                 minutes: step.minutes + 1,
             });
         }
@@ -199,6 +211,7 @@ enum Tool {
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 struct Step {
     minutes: u32,
+    estimate: u32,
     node: Node,
 }
 
@@ -208,12 +221,19 @@ struct Node {
     tool: Tool,
 }
 
+impl Node {
+    fn min_minutes(&self, other: &Self) -> u32 {
+        self.position.1.abs_diff(other.position.1) as u32
+            + self.position.0.abs_diff(other.position.0) as u32
+            + if other.tool != self.tool { 7 } else { 0 }
+    }
+}
+
 impl Ord for Step {
     fn cmp(&self, other: &Self) -> Ordering {
         // reverse order by minutes - min heap
-        other
-            .minutes
-            .cmp(&self.minutes)
+        (other.minutes + other.estimate)
+            .cmp(&(self.minutes + self.estimate))
             .then_with(|| other.node.cmp(&self.node))
     }
 }
@@ -262,9 +282,9 @@ target: (?P<tx>\d+),(?P<ty>\d+)",
         let depth: usize = caps.name("depth")?.as_str().parse()?;
         let tx: usize = caps.name("tx")?.as_str().parse()?;
         let ty: usize = caps.name("ty")?.as_str().parse()?;
-        //pad it so the search can go beyond the target down and  to the right
-        let cols = std::cmp::max(tx, ty) + 15;
-        let rows = cols;
+        //pad it so the search can go beyond the target down and to the right
+        let cols = tx + 125;
+        let rows = ty + 1;
         let regions = cart_product(0..rows, 0..cols)
             .scan(Vec::with_capacity(cols * rows), |levels, (y, x)| {
                 let level = if x == 0 && y == 0 || x == tx && y == ty {

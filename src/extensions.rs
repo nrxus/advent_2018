@@ -33,6 +33,16 @@ impl<T, E> ResultMerge<T, E> for Result<T, E> {
     }
 }
 
+impl AbsDiff for usize {
+    fn abs_diff(self, other: usize) -> usize {
+        if self > other {
+            self - other
+        } else {
+            other - self
+        }
+    }
+}
+
 impl AbsDiff for u16 {
     fn abs_diff(self, other: u16) -> u16 {
         if self > other {
