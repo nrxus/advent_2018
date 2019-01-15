@@ -2,7 +2,7 @@
 
 mod extensions;
 
-use std::{collections::VecDeque, num::ParseIntError, option::NoneError};
+use std::{cmp::Ordering, collections::BinaryHeap, num::ParseIntError, option::NoneError};
 
 use array_macro::array;
 use regex::Regex;
@@ -42,44 +42,27 @@ fn solve(input: &str) -> usize {
         },
     };
 
-    let mut regions = VecDeque::with_capacity(3_000_000);
-    regions.push_back(region);
-    while let Some(r) = regions.pop_front() {
-        regions.extend(
+    let mut queue = BinaryHeap::new();
+    queue.push(region);
+    let region = loop {
+        let r = queue.pop().unwrap();
+        if r.bounds.length == (1, 1, 1) {
+            break r;
+        }
+        queue.extend(
             r.divide()
                 .into_iter()
                 .filter(|r| r.bounds.length.0 > 0 && r.bounds.length.1 > 0 && r.bounds.length.2 > 0)
-                .filter(|r| r.nanobots.len() > 890)
+                .filter(|r| r.nanobots.len() > 1)
                 .cloned(),
         );
-        if regions.iter().all(|r| r.bounds.length == (1, 1, 1)) {
-            break;
-        }
-    }
+    };
 
-    let pos = regions
-        .into_iter()
-        .max_by(|a, b| {
-            let a_len = a.nanobots.len();
-            let b_len = b.nanobots.len();
-
-            if a_len == b_len {
-                let b_dist = b.bounds.pos.0.abs() + b.bounds.pos.1.abs() + b.bounds.pos.2.abs();
-                let a_dist = a.bounds.pos.0.abs() + a.bounds.pos.1.abs() + a.bounds.pos.2.abs();
-                b_dist.cmp(&a_dist)
-            } else {
-                a_len.cmp(&b_len)
-            }
-        })
-        .map(|r| r.bounds.pos)
-        .unwrap();
-
-    println!("chosen pos: {:?}", pos);
-
+    let pos = region.bounds.pos;
     (pos.0.abs() + pos.1.abs() + pos.2.abs()) as usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Nanobot {
     pos: (isize, isize, isize),
     radius: usize,
@@ -111,7 +94,7 @@ impl Nanobot {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Bounds {
     pos: (isize, isize, isize),
     length: (usize, usize, usize),
@@ -187,14 +170,6 @@ impl Bounds {
         )
     }
 
-    fn ldiv(len: usize) -> (usize, usize) {
-        if len % 2 == 0 {
-            (len / 2, len / 2)
-        } else {
-            (len / 2, len / 2 + 1)
-        }
-    }
-
     fn surrounds(&self, (x, y, z): (isize, isize, isize)) -> bool {
         let (left, top, inwards) = self.pos;
         let (right, bottom, outwards) = (
@@ -204,12 +179,80 @@ impl Bounds {
         );
         x >= left && x < right && y >= top && y < bottom && z >= inwards && z < outwards
     }
+
+    fn area(&self) -> usize {
+        self.length.0 * self.length.1 * self.length.2
+    }
+
+    fn dist_to_origin(&self) -> usize {
+        let (left, top, inwards) = self.pos;
+        let (right, bottom, outwards) = (
+            left + self.length.0 as isize,
+            top + self.length.1 as isize,
+            inwards + self.length.2 as isize,
+        );
+
+        let x_dist = if right < 0 {
+            (-right) as usize
+        } else if left > 0 {
+            left as usize
+        } else {
+            0
+        };
+        let y_dist = if bottom < 0 {
+            (-bottom) as usize
+        } else if top > 0 {
+            top as usize
+        } else {
+            0
+        };
+        let z_dist = if outwards < 0 {
+            (-outwards) as usize
+        } else if inwards > 0 {
+            inwards as usize
+        } else {
+            0
+        };
+        x_dist + y_dist + z_dist
+    }
+
+    fn ldiv(len: usize) -> (usize, usize) {
+        if len % 2 == 0 {
+            (len / 2, len / 2)
+        } else {
+            (len / 2, len / 2 + 1)
+        }
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct Region<'n> {
     bounds: Bounds,
     nanobots: Vec<&'n Nanobot>,
+}
+
+impl Ord for Region<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let len_cmp = self.nanobots.len().cmp(&other.nanobots.len());
+        if len_cmp == Ordering::Equal {
+            let to_origin = self.bounds.dist_to_origin();
+            let other_to_origin = self.bounds.dist_to_origin();
+            let dist_cmp = other_to_origin.cmp(&to_origin);
+            if dist_cmp == Ordering::Equal {
+                other.bounds.area().cmp(&self.bounds.area())
+            } else {
+                dist_cmp
+            }
+        } else {
+            len_cmp
+        }
+    }
+}
+
+impl PartialOrd for Region<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl<'n> Region<'n> {
@@ -243,21 +286,21 @@ impl From<ParseIntError> for ParsingError {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn test_a() {
-//         let input = r"pos=<10,12,12>, r=2
-// pos=<12,14,12>, r=2
-// pos=<16,12,12>, r=4
-// pos=<14,14,14>, r=6
-// pos=<50,50,50>, r=200
-// pos=<10,10,10>, r=5";
-//         assert_eq!(solve(input), 36);
-//     }
-// }
+    #[test]
+    fn test_a() {
+        let input = r"pos=<10,12,12>, r=2
+pos=<12,14,12>, r=2
+pos=<16,12,12>, r=4
+pos=<14,14,14>, r=6
+pos=<50,50,50>, r=200
+pos=<10,10,10>, r=5";
+        assert_eq!(solve(input), 36);
+    }
+}
 
 common::read_main!();
 //common::bootstrap!(16);
