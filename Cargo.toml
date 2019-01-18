@@ -180,6 +180,10 @@ path = "src/twenty_three_a.rs"
 name = "twenty_three_b"
 path = "src/twenty_three_b.rs"
 
+[[bin]]
+name = "twenty_four_a"
+path = "src/twenty_four_a.rs"
+
 [lib]
 name = "common"
 path = "src/common/lib.rs"
