@@ -119,7 +119,7 @@ impl Group<'_> {
         other
             .power()
             .cmp(&self.power())
-            .then_with(|| self.initiative.cmp(&other.initiative))
+            .then_with(|| other.initiative.cmp(&self.initiative))
     }
 }
 
