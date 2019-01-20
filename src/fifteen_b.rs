@@ -9,38 +9,18 @@ use std::{
 
 fn solve(input: &str) -> u32 {
     let original: BattleField = input.parse().unwrap();
-    let mut max_won = 0;
-    let mut min_lost = 0;
-    let mut current = 4;
-    loop {
+    for elf_damage in 3.. {
         let mut field = original.clone();
         let mut rounds = 0;
-        let won = loop {
-            match field.round(current) {
+        loop {
+            match field.round(elf_damage) {
                 BattleState::Continue => rounds += 1,
-                BattleState::Lost => break false,
-                BattleState::Won => break true,
+                BattleState::Lost => break,
+                BattleState::Won => return rounds * field.health(),
             }
-        };
-        current = if won {
-            if max_won != 0 && current + 1 >= max_won {
-                break rounds * field.health();
-            }
-            max_won = current;
-            if min_lost == 0 {
-                current / 2
-            } else {
-                (min_lost + max_won) / 2
-            }
-        } else {
-            min_lost = current;
-            if max_won == 0 {
-                current * 2
-            } else {
-                (min_lost + max_won + 1) / 2
-            }
-        };
+        }
     }
+    unreachable!()
 }
 
 #[derive(Clone)]
