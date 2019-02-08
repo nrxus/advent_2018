@@ -51,7 +51,7 @@ fn solve(input: &str) -> usize {
         }
         queue.extend(
             r.divide()
-                .into_iter()
+                .iter()
                 .filter(|r| r.bounds.length.0 > 0 && r.bounds.length.1 > 0 && r.bounds.length.2 > 0)
                 .filter(|r| r.nanobots.len() > 1)
                 .cloned(),

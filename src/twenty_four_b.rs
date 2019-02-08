@@ -1,5 +1,3 @@
-#![feature(transpose_result)]
-
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -251,7 +249,7 @@ impl<'s> Group<'s> {
             })
             .transpose()?
             .map(|l| l.as_str().split(", ").collect::<Vec<_>>())
-            .unwrap_or(vec![]);
+            .unwrap_or_else(|| vec![]);
         let weaknesses = mods
             .and_then(|m| WEAK_RE.captures(m))
             .map(|c| {
@@ -260,7 +258,7 @@ impl<'s> Group<'s> {
             })
             .transpose()?
             .map(|l| l.as_str().split(", ").collect::<Vec<_>>())
-            .unwrap_or(vec![]);
+            .unwrap_or_else(|| vec![]);
 
         Ok(Group {
             faction,

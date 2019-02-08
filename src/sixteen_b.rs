@@ -56,11 +56,11 @@ fn solve(input: &str) -> u16 {
         .trim()
         .lines()
         .map(|l| {
-            let mut l = l.split_whitespace();
-            let i = l.next().unwrap().parse().map(|i| result[&i]).unwrap();
-            let a: u16 = l.next().unwrap().parse().unwrap();
-            let b: u16 = l.next().unwrap().parse().unwrap();
-            let c: u16 = l.next().unwrap().parse().unwrap();
+            let mut words = l.split_whitespace();
+            let i = words.next().unwrap().parse().map(|i| result[&i]).unwrap();
+            let a: u16 = words.next().unwrap().parse().unwrap();
+            let b: u16 = words.next().unwrap().parse().unwrap();
+            let c: u16 = words.next().unwrap().parse().unwrap();
             (i, a, b, c)
         })
         .fold(Registers([0, 0, 0, 0]), |r, (i, a, b, c)| {

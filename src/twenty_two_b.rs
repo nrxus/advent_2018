@@ -261,7 +261,7 @@ impl Region {
         }
     }
 
-    fn tools(&self) -> [Tool; 2] {
+    fn tools(self) -> [Tool; 2] {
         match self {
             Region::Rocky => [Tool::ClimbingGear, Tool::Torch],
             Region::Wet => [Tool::ClimbingGear, Tool::Neither],

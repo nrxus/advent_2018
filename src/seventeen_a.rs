@@ -279,7 +279,7 @@ impl fmt::Display for World {
         (0..self.cols)
             .map(|x| if x == self.spring_x { '+' } else { '.' })
             .try_for_each(|c| write!(f, "{}", c))?;
-        writeln!(f, "")?;
+        writeln!(f)?;
         self.tiles.iter().enumerate().try_for_each(|(i, t)| {
             let c = match t {
                 Tile::Clay => '#',

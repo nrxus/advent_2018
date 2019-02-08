@@ -80,7 +80,7 @@ impl BattleField {
         self.tiles
             .iter()
             .filter_map(|t| match t {
-                Tile::Unit(u) => Some(u.health as u32),
+                Tile::Unit(u) => Some(u32::from(u.health)),
                 _ => None,
             })
             .sum()
@@ -90,9 +90,12 @@ impl BattleField {
         self.neighbors(i)
             .iter()
             .filter_map(|n| *n)
-            .filter_map(|n| match self.tiles[n] {
-                Tile::Unit(ref u) if is_enemy(u) => Some(n),
-                _ => None,
+            .filter(|&n| {
+                if let Tile::Unit(ref u) = self.tiles[n] {
+                    is_enemy(u)
+                } else {
+                    false
+                }
             })
             .min_by(|&a, &b| {
                 let (health_a, health_b) = match (&self.tiles[a], &self.tiles[b]) {
