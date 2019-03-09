@@ -1,5 +1,4 @@
 #![feature(try_trait)]
-#![feature(try_from)]
 
 mod guard_schedule;
 

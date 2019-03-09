@@ -255,7 +255,7 @@ impl FromStr for BattleField {
         let num_cols = lines.next().unwrap().len();
         let tiles = input
             .lines()
-            .flat_map(|l| l.chars())
+            .flat_map(str::chars)
             .enumerate()
             .map(|(i, t)| match t {
                 '#' => Tile::Wall,

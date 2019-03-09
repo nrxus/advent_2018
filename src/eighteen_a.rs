@@ -127,7 +127,7 @@ impl FromStr for World {
         let cols = lines.next().unwrap().len();
         let acres = input
             .lines()
-            .flat_map(|l| l.chars())
+            .flat_map(str::chars)
             .map(|a| match a {
                 '.' => Acre::Ground,
                 '#' => Acre::Lumberyard,
