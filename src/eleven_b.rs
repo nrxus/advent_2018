@@ -1,7 +1,6 @@
 mod extensions;
 
 use self::extensions::cart_product;
-use rayon::prelude::*;
 
 fn power_level(x: usize, y: usize, serial: i32) -> i32 {
     let rack_id = x as i32 + 10;
@@ -10,25 +9,30 @@ fn power_level(x: usize, y: usize, serial: i32) -> i32 {
 
 fn solve(input: &str) -> Answer {
     let serial: i32 = input.trim().parse().unwrap();
-    let mut grid: [i32; 300 * 300] = [0; 300 * 300];
-    grid.iter_mut()
-        .enumerate()
-        .for_each(|(i, v)| *v = power_level(i % 300 + 1, i / 300 + 1, serial));
+    let grid: Vec<_> = (0..=(300 * 300))
+        .map(|i| power_level(i % 300 + 1, i / 300 + 1, serial))
+        .collect();
+    let mut cache = grid.clone();
 
-    (1..301_usize)
-        .into_par_iter()
-        .flat_map(|s| {
-            cart_product(0..301 - s, 0..301 - s)
-                .par_bridge()
-                .map(move |(x, y)| (x, y, s))
+    let every_square_and_size = (2..301_usize).flat_map(|size| {
+        cart_product(0..301 - size, 0..301 - size).map(move |(x, y)| (x, y, size))
+    });
+
+    let power_level = |x, y| grid[y * 300 + x];
+
+    every_square_and_size
+        .max_by_key(|&(x, y, size)| {
+            let mut sum = cache[y * 300 + x];
+            for dx in 0..size {
+                sum += power_level(x + dx, y + size - 1);
+            }
+            for dy in 0..size - 1 {
+                sum += power_level(x + size - 1, y + dy);
+            }
+            cache[y * 300 + x] = sum;
+            sum
         })
-        .max_by_key(|&(x, y, s)| {
-            cart_product(0..s, 0..s)
-                .map(|(dx, dy)| (x + dx, y + dy))
-                .map(|(x, y)| grid[y * 300 + x])
-                .sum::<i32>()
-        })
-        .map(|(x, y, s)| Answer(x + 1, y + 1, s))
+        .map(|(x, y, size)| Answer(x + 1, y + 1, size))
         .unwrap()
 }
 
